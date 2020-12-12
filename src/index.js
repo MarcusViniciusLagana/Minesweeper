@@ -3,18 +3,25 @@ import ReactDOM from 'react-dom';
 import './index.css';
 
 function Square (props) {
+    let name = 'square';
+
+    if (props.clicked) name = 'clicked square'
+
     return (
-        <button className="square" onClick={props.click}>
+        <button className={name} onClick={props.clickHandle}>
             {props.value}
         </button>
     );
 }
 
 function BoardRow (props) {
+    const values = props.values;
+    const clicked = props.clicked;
+    const size = values.length;
     const squares = [];
 
-    for (const item of props.value) {
-        squares.push(<Square value={item}/>);
+    for (let i = 0; i < size; i++) {
+        squares.push(<Square value={values[i]} clicked={clicked[i]} clickHandle={() => props.clickHandle(i)}/>);
     }
 
     return(
@@ -25,10 +32,13 @@ function BoardRow (props) {
 }
 
 function Board (props) {
+    const size = props.state.size;
+    const values = props.state.values;
+    const clicked = props.state.clicked;
     const rows = [];
 
-    for (let i = 0; i < props.size; i++) {
-        rows.push(<BoardRow value={props.value.slice(i * props.size, i * props.size + props.size)}/>);
+    for (let i = 0; i < size; i++) {
+        rows.push(<BoardRow values={values.slice(i * size, i * size + size)} clicked={clicked.slice(i * size, i * size + size)} clickHandle={(j) => props.clickHandle(i * size + j)}/>);
     }
 
     return (
@@ -43,16 +53,32 @@ class Game extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            nextMove: 'X',
-            squares: Array(props.size * props.size).fill(null)
+            size: props.size,
+            values: Array(props.size ** 2).fill(null),
+            clicked: Array(props.size ** 2).fill(false),
+            mines: Array(props.size + 1).fill(Math.floor(Math.random() * props.size ** 2))
         };
     }
 
     restartGame() {
         this.setState({
-            nextMove: 'X',
-            squares: Array(this.props.size * this.props.size).fill(null)
-        });
+            size: this.props.size,
+            values: Array(this.props.size ** 2).fill(null),
+            clicked: Array(this.props.size ** 2).fill(false),
+            mines: Array(this.props.size + 1).fill(Math.floor(Math.random() * this.props.size ** 2))
+        }); 
+    }
+
+    clickHandle (index) {
+        //const values = this.state.values;
+        const clicked = this.state.clicked;
+
+        if (clicked[index]) return;
+
+        clicked[index] = true;
+        console.log(index);
+
+        this.setState({ clicked });
     }
 
     render() {
@@ -61,8 +87,8 @@ class Game extends React.Component {
             <div className="game-info">Info</div>
             <div className="game-area">
                 <div className="game">
-                    <Board value={this.state.squares} size={this.props.size}/>
-                </div>
+                    <Board state={this.state} clickHandle={(i) => this.clickHandle(i)}/>
+                </div>  
                 <div className="restart">
                     <button className="restart-button" onClick={() => this.restartGame()}>Restart Game</button>
                 </div>

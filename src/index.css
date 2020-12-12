@@ -38,23 +38,28 @@ body {
 }
 
 .square {
-    background: #FFFFFF;
+    background: #979797;
     border: 1px solid #999999;
     font-size: 10px;
     font-weight: bold;
     float: left;
     line-height: 34px;
-    height: 20px;
+    height: 40px;
     margin-right: -1px;
     margin-top: -1px;
     padding: 0;
     text-align: center;
-    width: 20px;
-    box-shadow: 0 1px 6px rgba(32, 33, 36, .28);
+    width: 40px;
+    box-shadow: inset -6px -6px 6px rgba(32, 33, 36, .28);
 }
 
 .square:focus {
     outline: none;
+}
+
+.clicked {
+    background: #cecece;
+    box-shadow: inset 6px 6px 6px 0px rgba(32, 33, 36, .28);
 }
 
 .restart {
