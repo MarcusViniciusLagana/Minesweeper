@@ -1,6 +1,4 @@
-body {
-    font: 20px "Century Gothic", "Futura", sans-serif;
-}
+body { font: 20px "Century Gothic", "Futura", sans-serif; }
 
 .title {
     text-align: center;
@@ -33,14 +31,12 @@ body {
     flex-direction: row;
 }
 
-.game-board {
-    margin: auto;
-}
+.game-board { margin: auto; }
 
 .square {
     background: #979797;
     border: 1px solid #999999;
-    font-size: 10px;
+    font-size: 28px;
     font-weight: bold;
     float: left;
     line-height: 34px;
@@ -53,14 +49,32 @@ body {
     box-shadow: inset -6px -6px 6px rgba(32, 33, 36, .28);
 }
 
-.square:focus {
-    outline: none;
-}
+.square:focus { outline: none; }
 
 .clicked {
     background: #cecece;
     box-shadow: inset 6px 6px 6px 0px rgba(32, 33, 36, .28);
 }
+
+.saved-exploded { color: red; }
+
+.maybe { color: blue; }
+
+.one { color: rgb(158, 100, 61); }
+
+.two { color: rgb(233, 193, 64); }
+
+.three { color: rgb(184, 27, 27); }
+
+.four { color: rgb(22, 22, 112); }
+
+.five { color: rgb(42, 187, 62); }
+
+.six { color: rgb(211, 174, 55); }
+
+.seven { color: rgb(173, 37, 133); }
+
+.eight { color: rgb(238, 218, 39); }
 
 .restart {
     margin-top: 40px;
@@ -80,15 +94,11 @@ body {
     background-color: darkcyan;
 }
 
-.restart-button:focus {
-    outline: none;
-}
+.restart-button:focus { outline: none; }
 
 .restart-button:hover {
     background-color: darkolivegreen;
     box-shadow: 0 1px 12px rgba(32, 33, 36, 1);
 }
 
-.restart-button:active {
-    background-color: red;
-}
+.restart-button:active { background-color: red; }
