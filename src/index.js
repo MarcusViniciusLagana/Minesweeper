@@ -105,11 +105,12 @@ class Game extends React.Component {
         const clicked = this.state.clicked;
         const mines = this.state.mines;
         const status = ['saved-exploded','maybe',''];
+        const clickNotIgnore = ['maybe',''];
         const symbols = ['\u26A0', '?', ''];
         let positions = [];
 
         if (mouse.button === 0) {
-            if (clicked[index]) return;
+            if (!clickNotIgnore.includes(clicked[index])) return;
 
             if (mines.includes(index)) {
                 clicked[index] = 'clicked saved-exploded';
@@ -160,11 +161,13 @@ class Game extends React.Component {
         for (const i of indexes) {
             positions.splice(i, 1, '');
         }
-        positions = positions.filter(x => x);
+        positions = positions.filter(x => x !== '');
 
         // Count bombs in adjacent squares
         let bombs = 0;
         for (const i of positions) if (mines.includes(i)) bombs++;
+
+        console.log([positions, bombs]);
 
         return([bombs, 'clicked ' + words[bombs], positions])
     }
