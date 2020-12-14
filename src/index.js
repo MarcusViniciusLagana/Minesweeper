@@ -5,12 +5,10 @@ import './index.css';
 function Square (props) {
     const name = props.state.clicked + ' square';
     let value = props.state.value;
-    if (value === 0) value = '';
     const clickHandle = (mouse) => props.clickHandle(mouse);
-    const contextHandle = (mouse) => {mouse.preventDefault(); props.clickHandle(mouse);}
 
     return (
-        <button className={name} onClick={clickHandle} onContextMenu={contextHandle}>
+        <button className={name} onClick={clickHandle} onContextMenu={clickHandle}>
             {value}
         </button>
     );
@@ -61,9 +59,10 @@ class Game extends React.Component {
         super(props);
         const mines = [];
         const bombs = ['\u2620','\u2622','\u2623'];
+        const size = props.size;
 
-        for (let i=0; i < props.size + 1; i++) {
-            const index = Math.floor(Math.random() * props.size ** 2);
+        for (let i=0; i < size + 1; i++) {
+            const index = Math.floor(Math.random() * size ** 2);
             if (!mines.includes(index)) mines.push(index);
             else i--;
         }
@@ -71,10 +70,10 @@ class Game extends React.Component {
         const index = Math.floor(Math.random() * 3);
 
         this.state = {
-            size: props.size,
-            values: Array(props.size ** 2).fill(null),
-            clicked: Array(props.size ** 2).fill(''),
+            values: Array(size ** 2).fill(null),
+            clicked: Array(size ** 2).fill(''),
             bomb: bombs[index],
+            size,
             mines
         };
     }
@@ -92,7 +91,6 @@ class Game extends React.Component {
         const index = Math.floor(Math.random() * 3);
 
         this.setState({
-            size: this.props.size,
             values: Array(this.props.size ** 2).fill(null),
             clicked: Array(this.props.size ** 2).fill(''),
             bomb: bombs[index],
@@ -104,35 +102,40 @@ class Game extends React.Component {
         const values = this.state.values;
         const clicked = this.state.clicked;
         const mines = this.state.mines;
-        const status = ['saved-exploded','maybe',''];
-        const clickNotIgnore = ['maybe',''];
-        const symbols = ['\u26A0', '?', ''];
+        const symbols = [null, '\u2691', '?', null];
         let positions = [];
 
         if (mouse.button === 0) {
-            if (!clickNotIgnore.includes(clicked[index])) return;
+            if (clicked[index]) return;
 
             if (mines.includes(index)) {
-                clicked[index] = 'clicked saved-exploded';
+                clicked[index] = 'clicked red';
                 values[index] = this.state.bomb;
-            } else [values[index], clicked[index], positions] = this.countBombs(index, this.state.size, mines);
+                // Lógica de detonar as bombas
+            } else {
+                [values[index], clicked[index], positions] = this.countBombs(index);
+                if (values[index] === 0) values[index] = '';
+            }
         } else if (mouse.button === 2) {
-            if (!status.includes(clicked[index])) return;
+            mouse.preventDefault()
+            if (clicked[index] && clicked[index] !== 'blue') return;
 
-            let i = status.indexOf(clicked[index]) + 1;
-            if (i === status.length) i = 0;
-            clicked[index] = status[i];
+            const i = symbols.indexOf(values[index]) + 1;
             values[index] = symbols[i];
+            if (i === 1) clicked[index] = 'blue';
+            else clicked[index] = '';
         }
 
         this.setState({ values, clicked });
 
-        if (mouse.button === 0 && values[index] === 0) {
+        if (mouse.button === 0 && !values[index]) {
             for (const i of positions) this.clickHandle(mouse, i);
         }
     }
 
-    countBombs (index, size, mines) {
+    countBombs (index) {
+        const size = this.state.size;
+        const mines = this.state.mines;
         const words = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'];
         let positions = [index - size - 1, index - size, index - size + 1, index - 1, index + 1, index + size -1, index + size, index + size + 1];
         const borderA = [];
@@ -167,16 +170,14 @@ class Game extends React.Component {
         let bombs = 0;
         for (const i of positions) if (mines.includes(i)) bombs++;
 
-        console.log([positions, bombs]);
-
         return([bombs, 'clicked ' + words[bombs], positions])
     }
 
     render() {
         return (<div>
             <div className="title">Minesweeper</div>
-            <div className="game-info">{'\u2691 \u2B59 \u26A0 \u2BD1 ? \u2753 \u2620 \u2622 \u2623'}</div>
             <div className="game-area">
+            <div className="game-info">{'\u2691 \u2B59 \u26A0 \u2BD1 ? \u2753 \u2620 \u2622 \u2623'}</div>
                 <div className="game">
                     <Board state={this.state} clickHandle={(mouse, i) => this.clickHandle(mouse, i)}/>
                 </div>  

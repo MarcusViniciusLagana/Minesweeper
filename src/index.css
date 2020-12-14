@@ -8,12 +8,6 @@ body { font: 20px "Century Gothic", "Futura", sans-serif; }
     min-width: 600px;
 }
 
-.game-info {
-    text-align: center;
-    margin: 20px;
-    min-width: 600px;
-}
-
 .game-area {
     background-color: rgb(231, 231, 231);
     margin-left: auto;
@@ -24,6 +18,11 @@ body { font: 20px "Century Gothic", "Futura", sans-serif; }
     min-width: 600px;
     border-radius: 15px;
     box-shadow: 0 1px 6px rgba(32, 33, 36, .28);
+}
+
+.game-info {
+    text-align: center;
+    margin-bottom: 40px;
 }
 
 .game {
@@ -60,9 +59,9 @@ body { font: 20px "Century Gothic", "Futura", sans-serif; }
     padding-left: 5px;
 }
 
-.saved-exploded { color: red; }
+.red { color: red; }
 
-.maybe { color: blue; }
+.blue { color: blue; }
 
 .one { color: rgb(158, 100, 61); }
 
