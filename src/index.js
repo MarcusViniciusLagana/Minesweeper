@@ -174,10 +174,14 @@ class Game extends React.Component {
     }
 
     render() {
+        const mines = this.state.mines;
+        const clicked = this.state.clicked;
+        const bombs = mines.length - clicked.length + clicked.filter(x => x !== 'blue').length;
+
         return (<div>
             <div className="title">Minesweeper</div>
             <div className="game-area">
-                <Menu/>
+                <Menu bombs={bombs}/>
                 <div className="game">
                     <Board state={this.state} clickHandle={(mouse, i) => this.clickHandle(mouse, i)}/>
                 </div>  
@@ -193,16 +197,30 @@ function Menu (props) {
     return (
         <div className="game-info game">
             <div className="bombs-time">
-                000
+                {zeroFill(props.bombs,3)}
             </div>
             <div className="level">
                 B
             </div>
             <div className="bombs-time">
-                000
+                {zeroFill(120,3)}
             </div>
         </div>
     );
+}
+
+function zeroFill( number, width ) {
+    let sign = '';
+
+    if (number < 0) {
+        number *= -1;
+        sign = '-';
+    }
+
+    width -= number.toString().length - 1;
+    if ( width > 0 )
+        return sign + new Array(width).join('0') + number;
+    return sign + number + "";
 }
 
 ReactDOM.render(
