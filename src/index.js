@@ -55,6 +55,8 @@ function Board (props) {
 
 class Game extends React.Component {
 
+    static timerID = null;
+
     constructor(props) {
         super(props);
         const mines = [];
@@ -67,22 +69,30 @@ class Game extends React.Component {
             else i--;
         }
 
-        const index = Math.floor(Math.random() * 3);
+        const index = Math.floor(Math.random() * bombs.length);
 
         this.state = {
             values: Array(size ** 2).fill(null),
             clicked: Array(size ** 2).fill(''),
             bomb: bombs[index],
             size,
-            mines
+            mines,
+            phase: 'paused',
+            initialTime: props.time,
+            time: props.time,
         };
     }
+
+    componentDidMount() { Game.timerID = null; }
+
+    componentWillUnmount() { if (Game.timerID) clearInterval(Game.timerID); }
 
     restartGame() {
         const mines = [];
         const bombs = ['\u2620','\u2622','\u2623'];
+        const time = this.state.initialTime;
 
-        for (let i=0; i < this.props.size + 2; i++) {
+        for (let i=0; i < this.props.size + 1; i++) {
             const index = Math.floor(Math.random() * this.props.size ** 2);
             if (!mines.includes(index)) mines.push(index);
             else i--;
@@ -90,11 +100,16 @@ class Game extends React.Component {
 
         const index = Math.floor(Math.random() * 3);
 
+        if (Game.timerID) clearInterval(Game.timerID);
+        Game.timerID = null;
+
         this.setState({
             values: Array(this.props.size ** 2).fill(null),
             clicked: Array(this.props.size ** 2).fill(''),
             bomb: bombs[index],
-            mines
+            mines,
+            phase: 'paused',
+            time
         });
     }
 
@@ -102,8 +117,19 @@ class Game extends React.Component {
         const values = this.state.values;
         const clicked = this.state.clicked;
         const mines = this.state.mines;
+        let phase = this.state.phase;
         const symbols = [null, '\u2691', '?', null];
         let positions = [];
+
+        if (phase === 'paused') {
+            phase = 'playing'
+            if (!Game.timerID) Game.timerID = setInterval(() => {
+                let time = this.state.time;
+                time--;
+                this.setState({ time });
+                if (time <= 0) clearInterval(Game.timerID);
+            },1000);
+        }
 
         if (mouse.button === 0) {
             if (clicked[index]) return;
@@ -116,6 +142,7 @@ class Game extends React.Component {
                 [values[index], clicked[index], positions] = this.countBombs(index);
                 if (values[index] === 0) values[index] = '';
             }
+            if (!values[index]) for (const i of positions) this.clickHandle(mouse, i);
         } else if (mouse.button === 2) {
             mouse.preventDefault()
             if (clicked[index] && clicked[index] !== 'blue') return;
@@ -126,11 +153,7 @@ class Game extends React.Component {
             else clicked[index] = '';
         }
 
-        this.setState({ values, clicked });
-
-        if (mouse.button === 0 && !values[index]) {
-            for (const i of positions) this.clickHandle(mouse, i);
-        }
+        this.setState({ values, clicked, phase });
     }
 
     countBombs (index) {
@@ -177,21 +200,28 @@ class Game extends React.Component {
         const mines = this.state.mines;
         const clicked = this.state.clicked;
         const bombs = mines.length - clicked.length + clicked.filter(x => x !== 'blue').length;
+        const time = this.state.time;
 
         return (<div>
             <div className="title">Minesweeper</div>
             <div className="game-area">
-                <Menu bombs={bombs}/>
+                <Menu bombs={bombs} time={time}/>
                 <div className="game">
                     <Board state={this.state} clickHandle={(mouse, i) => this.clickHandle(mouse, i)}/>
                 </div>  
                 <div className="restart">
-                    <button className="restart-button" onClick={() => this.restartGame()}>Restart Game</button>
+                    <button className="restart-button" onClick={() => this.restartGame(120)}>Restart Game</button>
                 </div>
             </div>
         </div>);
     }
 }
+
+//class timeHandler {
+//    static timer = null;
+//    static initialTime = 120;
+//    static time = 10;
+//}
 
 function Menu (props) {
     return (
@@ -203,7 +233,7 @@ function Menu (props) {
                 B
             </div>
             <div className="bombs-time">
-                {zeroFill(120,3)}
+                {zeroFill(props.time,3)}
             </div>
         </div>
     );
@@ -224,6 +254,6 @@ function zeroFill( number, width ) {
 }
 
 ReactDOM.render(
-    <Game size={9}/>,
+    <Game size={9} time={120}/>,
     document.getElementById('root')
 );
