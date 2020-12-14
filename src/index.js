@@ -15,7 +15,7 @@ function Square (props) {
 }
 
 function BoardRow (props) {
-    const size = props.state.values.length;
+    const size = props.state.size;
     const squares = [];
 
     for (let i = 0; i < size; i++) {
@@ -41,7 +41,7 @@ function Board (props) {
     for (let i = 0; i < size; i++) {
         const values = props.state.values.slice(i * size, i * size + size);
         const clicked = props.state.clicked.slice(i * size, i * size + size);
-        const state = {values, clicked};
+        const state = {values, clicked, size};
         const clickHandle = (mouse, j) => props.clickHandle(mouse, i * size + j);
         rows.push(<BoardRow state={state} clickHandle={clickHandle}/>);
     }
@@ -177,7 +177,7 @@ class Game extends React.Component {
         return (<div>
             <div className="title">Minesweeper</div>
             <div className="game-area">
-            <div className="game-info">{'\u2691 \u2B59 \u26A0 \u2BD1 ? \u2753 \u2620 \u2622 \u2623'}</div>
+                <Menu/>
                 <div className="game">
                     <Board state={this.state} clickHandle={(mouse, i) => this.clickHandle(mouse, i)}/>
                 </div>  
@@ -187,6 +187,22 @@ class Game extends React.Component {
             </div>
         </div>);
     }
+}
+
+function Menu (props) {
+    return (
+        <div className="game-info game">
+            <div className="bombs-time">
+                000
+            </div>
+            <div className="level">
+                B
+            </div>
+            <div className="bombs-time">
+                000
+            </div>
+        </div>
+    );
 }
 
 ReactDOM.render(

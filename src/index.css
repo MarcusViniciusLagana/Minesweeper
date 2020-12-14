@@ -1,7 +1,14 @@
-body { font: 20px "Century Gothic", "Futura", sans-serif; }
+@font-face {
+    font-family: "Digit";
+    src: url(./Digit.TTF) format("truetype");
+}
+
+body {
+    font: 20px "Century Gothic", "Futura", sans-serif;
+    text-align: center;
+}
 
 .title {
-    text-align: center;
     font-size: 60px;
     font-weight: bold;
     margin: 20px;
@@ -10,19 +17,27 @@ body { font: 20px "Century Gothic", "Futura", sans-serif; }
 
 .game-area {
     background-color: rgb(231, 231, 231);
-    margin-left: auto;
-    margin-right: auto;
-    padding-top: 40px;
-    padding-bottom: 40px;
-    width: 30%;
-    min-width: 600px;
+    display: inline-block;
+    padding: 40px;
     border-radius: 15px;
     box-shadow: 0 1px 6px rgba(32, 33, 36, .28);
 }
 
 .game-info {
-    text-align: center;
     margin-bottom: 40px;
+}
+
+.bombs-time {
+    align-items: left;
+    border: 1px solid black;
+    min-width: calc(25% - 2px);
+    font-family: "Digit";
+}
+
+.level {
+    align-items: center;
+    border: 1px solid black;
+    min-width: calc(50% - 2px);
 }
 
 .game {
@@ -40,8 +55,8 @@ body { font: 20px "Century Gothic", "Futura", sans-serif; }
     float: left;
     line-height: 1;
     height: 40px;
-    margin-right: -1px;
-    margin-top: -1px;
+    margin-right: 0px;
+    margin-top: 0px;
     padding: 0;
     padding-bottom: 5px;
     padding-right: 5px;
@@ -79,14 +94,9 @@ body { font: 20px "Century Gothic", "Futura", sans-serif; }
 
 .eight { color: rgb(238, 218, 39); }
 
-.restart {
-    margin-top: 40px;
-    text-align: center;
-}
+.restart { margin-top: 40px; }
 
 .restart-button {
-    align-self: center;
-    text-align: center;
     font-size: 34px;
     font-weight: bold;
     height: 80px;
