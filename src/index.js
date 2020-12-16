@@ -17,14 +17,14 @@ function Square (props) {
 
 function BoardRow (props) {
     const size = props.state.size;
-    const squares = [];
+    const squares = Array(size);
 
-    for (let i = 0; i < size; i++) {
+    for (let i = 0; i < squares.length; i++) {
         const value = props.state.values[i];
         const cssClass = props.state.cssClass[i];
         const state = {value, cssClass};
         const clickHandle = (mouse) => props.clickHandle(mouse, i);
-        squares.push(<Square state={state} clickHandle={clickHandle}/>);
+        squares[i] = <Square state={state} clickHandle={clickHandle}/>;
     }
 
     return(
@@ -37,14 +37,14 @@ function BoardRow (props) {
 function Board (props) {
     const size = props.state.size;
 
-    const rows = [];
+    const rows = Array(size);
 
-    for (let i = 0; i < size; i++) {
+    for (let i = 0; i < rows.length; i++) {
         const values = props.state.values.slice(i * size, i * size + size);
         const cssClass = props.state.cssClass.slice(i * size, i * size + size);
         const state = {values, cssClass, size};
         const clickHandle = (mouse, j) => props.clickHandle(mouse, i * size + j);
-        rows.push(<BoardRow state={state} clickHandle={clickHandle}/>);
+        rows[i] = <BoardRow state={state} clickHandle={clickHandle}/>;
     }
 
     return (
@@ -54,18 +54,46 @@ function Board (props) {
     );
 }
 
-function Menu (props) {
+function GameInfo (props) {
     return (
         <div className="game-info game">
             <div className="bombs-time">
-                {Zerofill(props.bombs,3)}
+                <p>{Zerofill(props.bombs,3)}</p>
             </div>
-            <div className="level">
-                B
+            <div className="game-over">
+                <p>{props.msg}</p>
             </div>
             <div className="bombs-time">
-                {Zerofill(props.time,3)}
+                <p>{Zerofill(props.time,3)}</p>
             </div>
+        </div>
+    );
+}
+
+function LevelOption (props) {
+    const onChange = (element) => props.levelControl(element);
+    const label = props.level[0].toUpperCase() + props.level.slice(1);
+
+    return (
+        <div className="input">
+            <input type="radio" name="level" id={props.level} value={props.level} checked={props.checked} onChange={onChange}/>
+            <label for={props.level}> {label}</label>
+        </div>
+    );
+}
+
+function Menu (props) {
+    const levelControl = (element) => props.levelControl(element);
+    const levels = ['easy', 'intermediate', 'hard'];
+    const radios = Array(levels.length);
+
+    for (let i=0; i < levels.length; i++) {
+        radios[i] = <LevelOption level={levels[i]} checked={props.level === levels[i]} levelControl={levelControl}/>
+    }
+
+    return (
+        <div className="level game">
+            {radios}
         </div>
     );
 }
@@ -74,12 +102,12 @@ class Game extends React.Component {
 
     static timerID = null;
 
-    constructor(props) {
-        super(props);
+    constructor (props) {
+        super (props);
         const size = props.size;
 
         // sorting mines positions
-        const mines = Array(size + 1);
+        const mines = Array(props.minesNumber);
         for (let i=0; i < mines.length; i++) {
             const index = Math.floor(Math.random() * size ** 2);
             if (!mines.includes(index)) mines[i] = index;
@@ -99,27 +127,32 @@ class Game extends React.Component {
             mines,
             phase: 'paused',
             initialTime: props.time,
-            time: props.time
+            time: props.time,
+            msg: '',
+            level: 'easy'
         };
     }
 
     // when mounting, set timer to null
-    componentDidMount() { Game.timerID = null; }
+    componentDidMount () { Game.timerID = null; }
 
     // when unmouting, reset timer
-    componentWillUnmount() { if (Game.timerID) clearInterval(Game.timerID); }
+    componentWillUnmount () { if (Game.timerID) clearInterval(Game.timerID); }
 
-    restartGame(size = null) {
+    restartGame (size = null, minesNumber = null) {
         // reseting size
         if (!size) size = this.state.size;
+        if (!minesNumber) minesNumber = this.state.mines.length;
 
         // sorting mines positions
-        const mines = Array(size + 1);
+        const mines = Array(minesNumber);
         for (let i=0; i < mines.length; i++) {
             const index = Math.floor(Math.random() * size ** 2);
             if (!mines.includes(index)) mines[i] = index;
             else i--;
         }
+        // DEV TEST LINE
+        //const mines = [1];
 
         // resseting timer
         const time = this.state.initialTime;
@@ -138,7 +171,8 @@ class Game extends React.Component {
             size,
             mines,
             phase: 'paused',
-            time
+            time,
+            msg: ''
         });
     }
 
@@ -146,14 +180,10 @@ class Game extends React.Component {
         let values = this.state.values;
         let cssClass = this.state.cssClass;
         let phase = this.state.phase;
+        let msg = '';
         let positions = [];
 
-        if (phase === 'game-over') return;
-
-        if (!this.state.time) {
-            this.setState({ phase: 'game-over' });
-            return;
-        }
+        if (phase === 'game-over' || !this.state.time) return;
 
         // If it is the first click, initializes clock
         if (phase === 'paused') {
@@ -162,7 +192,12 @@ class Game extends React.Component {
                 let time = this.state.time;
                 time--;
                 this.setState({ time });
-                if (time <= 0) clearInterval(Game.timerID);
+                // if time is up: game over
+                if (time <= 0) {
+                    [values, cssClass] = OpenAllSquares(this.state.values,this.state.cssClass,this.state.mines,this.state.size,this.state.bomb);
+                    this.setState({ values , cssClass , phase: 'game-over', msg: 'Time is Over!' });
+                    clearInterval(Game.timerID);
+                }
             },1000);
         }
 
@@ -173,9 +208,10 @@ class Game extends React.Component {
 
             // if square is a bomb, game-over
             if (this.state.mines.includes(index)) {
-                cssClass[index] = 'clicked exploded';
-                values[index] = this.state.bomb;
+                [values, cssClass] = OpenAllSquares(values, cssClass, this.state.mines, this.state.size, this.state.bomb);
+                cssClass[index] = 'clicked'
                 phase = 'game-over';
+                msg = 'Exploded!!!';
                 clearInterval(Game.timerID);
             // if square is not a bomb, count bombs around the square
             // Update value with the number of bombs and cssClass with
@@ -186,7 +222,8 @@ class Game extends React.Component {
                 if (values[index] === 0) values[index] = '';
             }
             // if square has no bomb around, open all the squares around
-            if (!values[index]) for (const i of positions) [values, cssClass] = OpenSquares(i, values, cssClass, this.state.mines, this.state.size);
+            if (!values[index]) for (const i of positions)
+                [values, cssClass] = OpenSquares(i, values, cssClass, this.state.mines, this.state.size, this.state.bomb);
         // if clicked with right button
         } else if (mouse.button === 2) {
             // if the button is clicked, return
@@ -194,44 +231,86 @@ class Game extends React.Component {
 
             // Cycle through the symbols '' (nothing), '\u2691' (saved) and '?' (maybe) with each click
             values[index] = values[index] === '' ? '\u2691' : values[index] === '\u2691' ? '?' : '';
-            // set the corresponding cssClass if the saved symbol is used
+            // set the corresponding cssClass if the 'saved' symbol is used
             if (values[index] === '\u2691') cssClass[index] = 'saved';
             else cssClass[index] = '';
         }
 
-        // Check if only the bomb squares are not clicked, if yes -> game-over
-        if (this.state.mines.length === cssClass.filter(x => x.indexOf('clicked') === -1).length) {
+        // Check if only the bomb squares are not clicked, if yes -> Victory!
+        if (phase !=='game-over' && this.state.mines.length === cssClass.filter(x => x.indexOf('clicked') === -1).length) {
             phase = 'game-over';
+            msg = 'Victory!';
             clearInterval(Game.timerID);
+            [values, cssClass] = OpenAllSquares(values, cssClass, this.state.mines, this.state.size, this.state.bomb, true);
         }
 
         // save the current state
-        this.setState({ values, cssClass, phase });
+        this.setState({ values, cssClass, phase, msg });
     }
 
-    render() {
+    levelControl (element) {
+        const level = element.currentTarget.value;
+        let size = 15; // level Hard
+        let minesNumber = 40; // level Hard
+
+        if (level === 'easy') {
+            size = 9;
+            minesNumber = 10;
+        }
+        if (level === 'intermediate') {
+            size = 12;
+            minesNumber = 25;
+        }
+
+        this.setState({ size, level });
+        this.restartGame(size, minesNumber);
+    }
+
+    render () {
         const mines = this.state.mines;
         const cssClass = this.state.cssClass;
         // Count the number of mines already discovered (saved)
-        const bombs = mines.length - cssClass.filter(x => x === 'saved').length;
+        const bombs = mines.length - cssClass.filter(x => x === 'saved').length - cssClass.filter(x => x === 'saved-true').length;
 
         return (<div>
             <div className="title">Minesweeper</div>
             <div className="game-area">
-                <Menu bombs={bombs} time={this.state.time}/>
+                <div>
+                <GameInfo bombs={bombs} time={this.state.time} msg={this.state.msg}/>
                 <div className="game">
                     <Board state={this.state} clickHandle={(mouse, i) => this.clickHandle(mouse, i)}/>
-                </div>  
+                </div>
+                <Menu level={this.state.level} levelControl={(element) => this.levelControl(element)}/>
                 <div className="restart">
                     <button className="restart-button" onClick={() => this.restartGame()}>Restart Game</button>
+                </div>
                 </div>
             </div>
         </div>);
     }
 }
 
-function OpenSquares (index, values, cssClass, mines, size) {
+function OpenAllSquares (values, cssClass, mines, size, bombSymbol, win=false) {
+    for (let index = 0; index < values.length; index++) {
+        if (mines.includes(index)) {
+            values[index] = cssClass[index] === 'saved' || win ? '\u2713' : bombSymbol;
+            cssClass[index] = cssClass[index] === 'saved' || win ? 'saved-true' : 'clicked exploded';
+        }
+        if (cssClass[index] === 'saved') {
+            values[index] = '\u2717';
+            cssClass[index] = 'exploded';
+        }
+        if (!cssClass[index]) {
+            [values[index], cssClass[index]] = CountBombs(size, mines, index);
+            if (values[index] === 0) values[index] = '';
+        }
+    }
+    return [values, cssClass];
+}
+
+function OpenSquares (index, values, cssClass, mines, size, bombSymbol) {
     let positions = [];
+
     // if square was already clicked, then return.
     if (cssClass[index]) return [values, cssClass];
 
@@ -242,7 +321,8 @@ function OpenSquares (index, values, cssClass, mines, size) {
     if (values[index] === 0) values[index] = '';
 
     // if square has no bomb around, open all the squares around
-    if (!values[index]) for (const i of positions) [values, cssClass] = OpenSquares(i, values, cssClass, mines, size);
+    if (!values[index]) for (const i of positions)
+        [values, cssClass] = OpenSquares(i, values, cssClass, mines, size, bombSymbol);
 
     // return the updated values and cssClasses -> return them to clickHandle to update state
     return [values, cssClass];
@@ -299,6 +379,6 @@ function Zerofill (number,width) {
 }
 
 ReactDOM.render(
-    <Game size={9} time={120}/>,
+    <Game size={9} minesNumber={10} time={120}/>,
     document.getElementById('root')
 );

@@ -1,6 +1,6 @@
 @font-face {
     font-family: "Digit";
-    src: url(./Digit.TTF) format("truetype");
+    src: url(./DS-Digital_Bold.ttf) format("truetype");
 }
 
 body {
@@ -24,20 +24,38 @@ body {
 }
 
 .game-info {
-    margin-bottom: 40px;
+    border: 5px solid rgb(142, 142, 142);
+    background-color: rgb(160, 160, 160);
+    box-shadow: inset 0 0px 6px 4px rgba(32, 33, 36, .28);
 }
 
 .bombs-time {
-    align-items: left;
-    border: 1px solid black;
-    min-width: calc(25% - 2px);
-    font-family: "Digit";
+    background-color: rgba(41, 179, 36, 0.58);
+    min-width: 25%;
+    height: 50px;
+    line-height: 50px;
+    box-shadow: inset 0 0 6px 6px rgba(32, 33, 36, .28)
 }
 
-.level {
-    align-items: center;
-    border: 1px solid black;
-    min-width: calc(50% - 2px);
+.bombs-time p {
+    margin-block-start: 0px;
+    margin-block-end: 0px;
+    display: inline-block;
+    vertical-align: middle;
+    font: 40px "Digit";
+}
+
+.game-over {
+    min-width: 50%;
+    height: 50px;
+    line-height: 50px;
+}
+
+.game-over p {
+    margin-block-start: 0px;
+    margin-block-end: 0px;
+    display: inline-block;
+    vertical-align: middle;
 }
 
 .game {
@@ -78,9 +96,11 @@ body {
 
 .saved { color: blue; }
 
-.one { color: rgb(158, 100, 61); }
+.saved-true { color: green}
 
-.two { color: rgb(233, 193, 64); }
+.one { color: rgb(220, 117, 47); }
+
+.two { color: rgb(202, 171, 20); }
 
 .three { color: rgb(184, 27, 27); }
 
@@ -88,11 +108,30 @@ body {
 
 .five { color: rgb(42, 187, 62); }
 
-.six { color: rgb(211, 174, 55); }
+.six { color: rgb(171, 89, 32); }
 
 .seven { color: rgb(173, 37, 133); }
 
-.eight { color: rgb(238, 218, 39); }
+.eight { color: rgb(50, 171, 218); }
+
+.level {
+    margin-top: 20px;
+    display: table;
+    min-width: 100%;
+}
+
+.input{
+    display: table-cell;
+    text-align: center;
+}
+
+.input:first-child  {
+    text-align: left;
+}
+
+.input:last-child {
+    text-align: right;
+}
 
 .restart { margin-top: 40px; }
 
