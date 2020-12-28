@@ -1,57 +1,110 @@
+:root { --scale: 0.25; }
+@media (min-width: 250px) {
+    :root { --scale: calc(1/3); }
+}
+@media (min-width: 350px) {
+    :root { --scale: 0.5; }
+}
+@media (min-width: 450px) { 
+    :root { --scale: calc(2/3); }
+}
+@media (min-width: 650px) { 
+    :root { --scale: 1; }
+}
+
 @font-face {
     font-family: "Digit";
     src: url(./DS-Digital_Bold.ttf) format("truetype");
 }
 
 body {
-    font: 20px "Century Gothic", "Futura", sans-serif;
+    font: calc(20px * var(--scale)) "Century Gothic", "Futura", sans-serif;
     text-align: center;
 }
 
-.title {
-    font-size: 60px;
-    font-weight: bold;
-    margin: 20px;
-    min-width: 600px;
+ .initial {
+    width: 100%;
+    height: 100%;
+    background-color: rgb(255, 255, 255);
+    z-index: 1;
+    position: absolute;
+    top: 0;
+    left: 0;
+    transition: opacity 2s, width 2s, height 2s;
 }
+
+.initial-img {
+    position: absolute;
+    top: calc(50vh - 410px * var(--scale));
+    left: calc(50vw - 300px * var(--scale));
+    width: calc(600px * var(--scale));
+    height: calc(600px * var(--scale));
+    transition: opacity 2s, width 2s, height 2s, top 2s, left 2s;
+}
+
+@keyframes turning {
+    from {transform: rotate(0deg);}
+    to {transform: rotate(360deg);}
+  }
+
+.mine { animation: turning 15s linear 0s infinite normal none; }
+
+.initial-txt {
+    text-align: center;
+    position: absolute;
+    top: calc(50vh + 200px * var(--scale));
+    width: 100%;
+    height: calc(30px * var(--scale));
+    transition: opacity 2s, width 2s, height 2s, top 2s, left 2s, font-size 2s;
+}
+
+.abs-btn {
+    position: absolute;
+    top: calc(50vh + 235px * var(--scale));
+    left: calc(50vw - 150px * var(--scale));
+    transition: opacity 2s, width 2s, height 2s, top 2s, left 2s;
+}
+
+.title {
+    font-size: calc(60px * var(--scale));
+    font-weight: bold;
+    margin: calc(20px * var(--scale));
+    min-width: calc(600px * var(--scale));
+}
+
+.container { min-width: calc(600px * var(--scale)); }
 
 .game-area {
     background-color: rgb(231, 231, 231);
     display: inline-block;
-    padding: 40px;
-    border-radius: 15px;
+    border-radius: calc(15px * var(--scale));
     box-shadow: 0 1px 6px rgba(32, 33, 36, .28);
+    padding: calc(20px * var(--scale));
 }
 
 .game-info {
-    border: 5px solid rgb(142, 142, 142);
+    border: calc(5px * var(--scale)) solid rgb(142, 142, 142);
     background-color: rgb(160, 160, 160);
     box-shadow: inset 0 0px 6px 4px rgba(32, 33, 36, .28);
 }
 
 .bombs-time {
     background-color: rgba(41, 179, 36, 0.58);
-    min-width: 25%;
-    height: 50px;
-    line-height: 50px;
-    box-shadow: inset 0 0 6px 6px rgba(32, 33, 36, .28)
+    width: 25%;
+    height: calc(50px * var(--scale));
+    line-height: calc(50px * var(--scale));
+    box-shadow: inset 0 0 6px 6px rgba(32, 33, 36, .28);
 }
 
-.bombs-time p {
-    margin-block-start: 0px;
-    margin-block-end: 0px;
-    display: inline-block;
-    vertical-align: middle;
-    font: 40px "Digit";
-}
+.bombs-time p { font: calc(40px * var(--scale)) "Digit"; }
 
 .game-over {
-    min-width: 50%;
-    height: 50px;
-    line-height: 50px;
+    width: 50%;
+    height: calc(50px * var(--scale));
+    line-height: calc(50px * var(--scale));
 }
 
-.game-over p {
+p {
     margin-block-start: 0px;
     margin-block-end: 0px;
     display: inline-block;
@@ -68,17 +121,17 @@ body {
 .square {
     background: #979797;
     border: 1px solid #999999;
-    font-size: 24px;
+    font-size: calc(24px * var(--scale));
     font-weight: bold;
     float: left;
     line-height: 1;
-    height: 40px;
+    height: calc(40px * var(--scale));
     margin-right: 0px;
     margin-top: 0px;
     padding: 0;
-    padding-bottom: 5px;
-    padding-right: 5px;
-    width: 40px;
+    padding-bottom: calc(5px * var(--scale));
+    padding-right: calc(5px * var(--scale));
+    width: calc(40px * var(--scale));
     box-shadow: inset -6px -6px 6px rgba(32, 33, 36, .28);
 }
 
@@ -88,8 +141,8 @@ body {
     background: #cecece;
     box-shadow: inset 6px 6px 6px 0px rgba(32, 33, 36, .28);
     padding: 0;
-    padding-top: 5px;
-    padding-left: 5px;
+    padding-top: calc(5px * var(--scale));
+    padding-left: calc(5px * var(--scale));
 }
 
 .exploded { color: red; }
@@ -115,7 +168,7 @@ body {
 .eight { color: rgb(50, 171, 218); }
 
 .level {
-    margin-top: 20px;
+    margin-top: calc(20px * var(--scale));
     display: table;
     min-width: 100%;
 }
@@ -125,21 +178,17 @@ body {
     text-align: center;
 }
 
-.input:first-child  {
-    text-align: left;
-}
+.input:first-child  { text-align: left; }
 
-.input:last-child {
-    text-align: right;
-}
+.input:last-child { text-align: right; }
 
-.restart { margin-top: 40px; }
+.restart { margin-top: calc(40px * var(--scale)); }
 
 .restart-button {
-    font-size: 34px;
+    font-size: calc(34px * var(--scale));
     font-weight: bold;
-    height: 80px;
-    width: 300px;
+    height: calc(80px * var(--scale));
+    width: calc(300px * var(--scale));
     border: none;
     border-radius: 15px;
     box-shadow: 0 1px 6px rgba(32, 33, 36, .28);
@@ -154,3 +203,12 @@ body {
 }
 
 .restart-button:active { background-color: red; }
+
+.trigger {
+    opacity: 0;
+    height: 0;
+    width: 0;
+    top: 0;
+    left: 0;
+    font-size: 0;
+}

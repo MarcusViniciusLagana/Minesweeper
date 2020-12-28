@@ -3,8 +3,8 @@ import ReactDOM from 'react-dom';
 import './index.css';
 
 function Square (props) {
-    const cssClass = props.state.cssClass + ' square';
-    let value = props.state.value;
+    const cssClass = props.squareCSS + ' square';
+    let value = props.squareValue;
     const clickHandle = (mouse) => props.clickHandle(mouse);
     const contextHandle = (mouse) => {mouse.preventDefault(); props.clickHandle(mouse);}
 
@@ -16,35 +16,37 @@ function Square (props) {
 }
 
 function BoardRow (props) {
-    const size = props.state.size;
-    const squares = Array(size);
 
-    for (let i = 0; i < squares.length; i++) {
-        const value = props.state.values[i];
-        const cssClass = props.state.cssClass[i];
-        const state = {value, cssClass};
-        const clickHandle = (mouse) => props.clickHandle(mouse, i);
-        squares[i] = <Square state={state} clickHandle={clickHandle}/>;
-    }
+    const columns = props.squaresValues.map((squareValue, column) =>
+        <Square key={'square-' + props.row.toString() + '-' + column.toString()}
+            squareValue={squareValue}
+            squareCSS={props.squaresCSS[column]}
+            clickHandle={(mouse) => props.clickHandle(mouse, column)}/>
+    );
 
     return(
         <div className="board-row">
-            {squares}
+            {columns}
         </div>
     );
 }
 
 function Board (props) {
-    const size = props.state.size;
+    const rowsNumber = props.rowsNumber;
+    const columnsNumber = props.columnsNumber;
 
-    const rows = Array(size);
+    const rows = Array(rowsNumber);
 
-    for (let i = 0; i < rows.length; i++) {
-        const values = props.state.values.slice(i * size, i * size + size);
-        const cssClass = props.state.cssClass.slice(i * size, i * size + size);
-        const state = {values, cssClass, size};
-        const clickHandle = (mouse, j) => props.clickHandle(mouse, i * size + j);
-        rows[i] = <BoardRow state={state} clickHandle={clickHandle}/>;
+    for (let row = 0; row < rowsNumber; row++) {
+        const initIndex = row * columnsNumber;
+        const endIndex = initIndex + columnsNumber;
+        const squaresValues = props.squaresValues.slice(initIndex, endIndex);
+        const squaresCSS = props.squaresCSS.slice(initIndex, endIndex);
+        rows[row] = <BoardRow key={'row-' + row.toString()}
+            row={row}
+            squaresValues={squaresValues}
+            squaresCSS={squaresCSS}
+            clickHandle={(mouse, column) => props.clickHandle(mouse, initIndex + column)}/>
     }
 
     return (
@@ -58,7 +60,7 @@ function GameInfo (props) {
     return (
         <div className="game-info game">
             <div className="bombs-time">
-                <p>{Zerofill(props.bombs,3)}</p>
+                <p>{Zerofill(props.bombsNumber,3)}</p>
             </div>
             <div className="game-over">
                 <p>{props.msg}</p>
@@ -76,8 +78,12 @@ function LevelOption (props) {
 
     return (
         <div className="input">
-            <input type="radio" name="level" id={props.level} value={props.level} checked={props.checked} onChange={onChange}/>
-            <label for={props.level}> {label}</label>
+            <input type="radio" name="level"
+            id={props.level}
+            value={props.level}
+            checked={props.checked}
+            onChange={onChange}/>
+            <label htmlFor={props.level}> {label}</label>
         </div>
     );
 }
@@ -85,11 +91,13 @@ function LevelOption (props) {
 function Menu (props) {
     const levelControl = (element) => props.levelControl(element);
     const levels = ['easy', 'intermediate', 'hard'];
-    const radios = Array(levels.length);
 
-    for (let i=0; i < levels.length; i++) {
-        radios[i] = <LevelOption level={levels[i]} checked={props.level === levels[i]} levelControl={levelControl}/>
-    }
+    const radios = levels.map((level, index) =>
+        <LevelOption key={'op-' + index.toString()}
+        level={level}
+        checked={props.level === level}
+        levelControl={levelControl}/>
+    );
 
     return (
         <div className="level game">
@@ -104,13 +112,14 @@ class Game extends React.Component {
 
     constructor (props) {
         super (props);
-        const size = props.size;
+        const rowsNumber = props.rows;
+        const columnsNumber = props.columns;
 
         // sorting mines positions
-        const mines = Array(props.minesNumber);
-        for (let i=0; i < mines.length; i++) {
-            const index = Math.floor(Math.random() * size ** 2);
-            if (!mines.includes(index)) mines[i] = index;
+        const minesPositions = Array(props.minesNumber);
+        for (let i = 0; i < props.minesNumber; i++) {
+            const index = Math.floor(Math.random() * rowsNumber * columnsNumber);
+            if (!minesPositions.includes(index)) minesPositions[i] = index;
             else i--;
         }
 
@@ -120,16 +129,18 @@ class Game extends React.Component {
 
         // setting initial state
         this.state = {
-            values: Array(size ** 2).fill(''),
-            cssClass: Array(size ** 2).fill(''),
-            bomb: bombs[index],
-            size,
-            mines,
-            phase: 'paused',
+            init: true,
+            squaresValues: Array(rowsNumber * columnsNumber).fill(''),
+            squaresCSS: Array(rowsNumber * columnsNumber).fill(''),
+            minesPositions,
             initialTime: props.time,
             time: props.time,
+            rowsNumber,
+            columnsNumber,
+            bombSymbol: bombs[index],
+            phase: 'paused',
+            level: 'easy',
             msg: '',
-            level: 'easy'
         };
     }
 
@@ -139,20 +150,19 @@ class Game extends React.Component {
     // when unmouting, reset timer
     componentWillUnmount () { if (Game.timerID) clearInterval(Game.timerID); }
 
-    restartGame (size = null, minesNumber = null) {
+    restartGame (rowsNumber = null, columnsNumber = null, minesNumber = null) {
         // reseting size
-        if (!size) size = this.state.size;
-        if (!minesNumber) minesNumber = this.state.mines.length;
+        if (!rowsNumber) rowsNumber = this.state.rowsNumber;
+        if (!columnsNumber) columnsNumber = this.state.columnsNumber;
+        if (!minesNumber) minesNumber = this.state.minesPositions.length;
 
         // sorting mines positions
-        const mines = Array(minesNumber);
-        for (let i=0; i < mines.length; i++) {
-            const index = Math.floor(Math.random() * size ** 2);
-            if (!mines.includes(index)) mines[i] = index;
+        const minesPositions = Array(minesNumber);
+        for (let i = 0; i < minesNumber; i++) {
+            const index = Math.floor(Math.random() * rowsNumber * columnsNumber);
+            if (!minesPositions.includes(index)) minesPositions[i] = index;
             else i--;
         }
-        // DEV TEST LINE
-        //const mines = [1];
 
         // resseting timer
         const time = this.state.initialTime;
@@ -165,20 +175,22 @@ class Game extends React.Component {
 
         // reseting state
         this.setState({
-            values: Array(size ** 2).fill(''),
-            cssClass: Array(size ** 2).fill(''),
-            bomb: bombs[index],
-            size,
-            mines,
-            phase: 'paused',
+            init: false,
+            squaresValues: Array(rowsNumber * columnsNumber).fill(''),
+            squaresCSS: Array(rowsNumber * columnsNumber).fill(''),
+            minesPositions,
             time,
+            rowsNumber,
+            columnsNumber,
+            bombSymbol: bombs[index],
+            phase: 'paused',
             msg: ''
         });
     }
 
     clickHandle (mouse, index) {
-        let values = this.state.values;
-        let cssClass = this.state.cssClass;
+        let squaresValues = this.state.squaresValues.slice();
+        let squaresCSS = this.state.squaresCSS.slice();
         let phase = this.state.phase;
         let msg = '';
         let positions = [];
@@ -194,8 +206,15 @@ class Game extends React.Component {
                 this.setState({ time });
                 // if time is up: game over
                 if (time <= 0) {
-                    [values, cssClass] = OpenAllSquares(this.state.values,this.state.cssClass,this.state.mines,this.state.size,this.state.bomb);
-                    this.setState({ values , cssClass , phase: 'game-over', msg: 'Time is Over!' });
+                    const squaresValues = this.state.squaresValues.slice();
+                    const squaresCSS = this.state.squaresCSS.slice();
+                    OpenAllSquares(squaresValues, squaresCSS,
+                        this.state.minesPositions,
+                        this.state.bombSymbol,
+                        this.state.rowsNumber,
+                        this.state.columnsNumber);
+                    this.setState({ squaresValues , squaresCSS , phase: 'game-over',
+                        msg: 'Time is Over!' });
                     clearInterval(Game.timerID);
                 }
             },1000);
@@ -204,162 +223,211 @@ class Game extends React.Component {
         // if clicked with left button
         if (mouse.button === 0) {
             // if square was already clicked, then return.
-            if (cssClass[index]) return;
+            if (squaresCSS[index]) return;
 
             // if square is a bomb, game-over
-            if (this.state.mines.includes(index)) {
-                [values, cssClass] = OpenAllSquares(values, cssClass, this.state.mines, this.state.size, this.state.bomb);
-                cssClass[index] = 'clicked'
+            if (this.state.minesPositions.includes(index)) {
+                OpenAllSquares(squaresValues, squaresCSS, this.state.minesPositions,
+                    this.state.bombSymbol, this.state.rowsNumber, this.state.columnsNumber);
+                squaresCSS[index] = 'clicked'
                 phase = 'game-over';
                 msg = 'Exploded!!!';
                 clearInterval(Game.timerID);
-            // if square is not a bomb, count bombs around the square
-            // Update value with the number of bombs and cssClass with
+            // if square is not a bombSymbol, count bombs around the square
+            // Update value with the number of bombs and squaresCSS with
             // 'clicked ' + the number of bombs as text
             // positions keep the indexes of the squares around
             } else {
-                [values[index], cssClass[index], positions] = CountBombs(this.state.size, this.state.mines, index);
-                if (values[index] === 0) values[index] = '';
+                [squaresValues[index], squaresCSS[index], positions] =
+                    CountBombs(index,
+                        this.state.minesPositions,
+                        this.state.rowsNumber,
+                        this.state.columnsNumber);
+                if (squaresValues[index] === 0) {
+                    squaresValues[index] = '';
+                // if square has no bombSymbol around, open all the squares around
+                    for (const position of positions)
+                        OpenSquares(position, squaresValues, squaresCSS,
+                        this.state.minesPositions,
+                        this.state.rowsNumber,
+                        this.state.columnsNumber);
+                }
             }
-            // if square has no bomb around, open all the squares around
-            if (!values[index]) for (const i of positions)
-                [values, cssClass] = OpenSquares(i, values, cssClass, this.state.mines, this.state.size, this.state.bomb);
         // if clicked with right button
         } else if (mouse.button === 2) {
             // if the button is clicked, return
-            if (cssClass[index] && cssClass[index] !== 'saved') return;
+            if (squaresCSS[index] && squaresCSS[index] !== 'saved') return;
 
-            // Cycle through the symbols '' (nothing), '\u2691' (saved) and '?' (maybe) with each click
-            values[index] = values[index] === '' ? '\u2691' : values[index] === '\u2691' ? '?' : '';
-            // set the corresponding cssClass if the 'saved' symbol is used
-            if (values[index] === '\u2691') cssClass[index] = 'saved';
-            else cssClass[index] = '';
+            // Cycle through the symbols '' (nothing), '\u2691' (saved) and
+            // '?' (maybe) with each click
+            squaresValues[index] = squaresValues[index] === '' ? '\u2691' :
+                squaresValues[index] === '\u2691' ? '?' : '';
+            // set the corresponding squaresCSS if the 'saved' symbol is used
+            if (squaresValues[index] === '\u2691') squaresCSS[index] = 'saved';
+            else squaresCSS[index] = '';
         }
 
-        // Check if only the bomb squares are not clicked, if yes -> Victory!
-        if (phase !=='game-over' && this.state.mines.length === cssClass.filter(x => x.indexOf('clicked') === -1).length) {
+        // Check if only the bombSymbol squares are not clicked, if yes -> Victory!
+        if (phase !=='game-over' && this.state.minesPositions.length ===
+            squaresCSS.filter(x => x.indexOf('clicked') === -1).length) {
             phase = 'game-over';
             msg = 'Victory!';
             clearInterval(Game.timerID);
-            [values, cssClass] = OpenAllSquares(values, cssClass, this.state.mines, this.state.size, this.state.bomb, true);
+            OpenAllSquares(squaresValues, squaresCSS, this.state.minesPositions,
+                this.state.bombSymbol, this.state.rowsNumber, this.state.columnsNumber, true);
         }
 
         // save the current state
-        this.setState({ values, cssClass, phase, msg });
+        this.setState({ squaresValues, squaresCSS, phase, msg });
     }
 
     levelControl (element) {
         const level = element.currentTarget.value;
-        let size = 15; // level Hard
-        let minesNumber = 40; // level Hard
+        let rows = 13; // level Hard
+        let columns = 18; // level Hard
+        let minesNumber = 40; // level Hard 17%
 
         if (level === 'easy') {
-            size = 9;
-            minesNumber = 10;
+            rows = 9;
+            columns = 9;
+            minesNumber = 10; // 12%
         }
         if (level === 'intermediate') {
-            size = 12;
-            minesNumber = 25;
+            rows = 12;
+            columns = 12;
+            minesNumber = 22; // 15%
         }
 
-        this.setState({ size, level });
-        this.restartGame(size, minesNumber);
+        this.setState({ level });
+        this.restartGame(rows, columns, minesNumber);
     }
 
     render () {
-        const mines = this.state.mines;
-        const cssClass = this.state.cssClass;
+        const minesNumber = this.state.minesPositions.length;
+        const squaresCSS = this.state.squaresCSS;
         // Count the number of mines already discovered (saved)
-        const bombs = mines.length - cssClass.filter(x => x === 'saved').length - cssClass.filter(x => x === 'saved-true').length;
+        const bombsNumber = minesNumber - squaresCSS.filter(x => x === 'saved').length
+            - squaresCSS.filter(x => x === 'saved-true').length;
 
-        return (<div>
+        return (<>
+            <HomeScreen init={this.state.init} onClick={() => this.restartGame()}/>
             <div className="title">Minesweeper</div>
-            <div className="game-area">
-                <div>
-                <GameInfo bombs={bombs} time={this.state.time} msg={this.state.msg}/>
-                <div className="game">
-                    <Board state={this.state} clickHandle={(mouse, i) => this.clickHandle(mouse, i)}/>
-                </div>
-                <Menu level={this.state.level} levelControl={(element) => this.levelControl(element)}/>
-                <div className="restart">
-                    <button className="restart-button" onClick={() => this.restartGame()}>Restart Game</button>
-                </div>
+            <div className="container">
+                <div className="game-area">
+                    <GameInfo bombsNumber={bombsNumber} time={this.state.time}
+                        msg={this.state.msg}/>
+                    <div className="game">
+                        <Board squaresValues={this.state.squaresValues}
+                            squaresCSS={this.state.squaresCSS}
+                            rowsNumber={this.state.rowsNumber}
+                            columnsNumber={this.state.columnsNumber}
+                            clickHandle={(mouse, i) => this.clickHandle(mouse, i)}/>
+                    </div>
+                    <Menu level={this.state.level}
+                        levelControl={(element) => this.levelControl(element)}/>
+                    <div className="restart">
+                        <button className="restart-button"
+                            onClick={() => this.restartGame()}>
+                            Restart Game
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>);
+        </>);
     }
 }
 
-function OpenAllSquares (values, cssClass, mines, size, bombSymbol, win=false) {
-    for (let index = 0; index < values.length; index++) {
-        if (mines.includes(index)) {
-            values[index] = cssClass[index] === 'saved' || win ? '\u2713' : bombSymbol;
-            cssClass[index] = cssClass[index] === 'saved' || win ? 'saved-true' : 'clicked exploded';
-        }
-        if (cssClass[index] === 'saved') {
-            values[index] = '\u2717';
-            cssClass[index] = 'exploded';
-        }
-        if (!cssClass[index]) {
-            [values[index], cssClass[index]] = CountBombs(size, mines, index);
-            if (values[index] === 0) values[index] = '';
-        }
+function HomeScreen (props) {
+    let txtClass = 'initial-txt'
+    let imgClass = 'initial-img';
+    let btnClass = 'restart-button abs-btn';
+    let divClass = 'initial';
+    if (!props.init) {
+        txtClass += ' trigger';
+        imgClass += ' trigger';
+        btnClass += ' trigger';
+        divClass += ' trigger';
     }
-    return [values, cssClass];
+
+    return (
+        <div className={divClass}>
+            <img className={imgClass} alt="background" src="./Minebackground.png"/>
+            <img className={imgClass + ' mine'} alt="Mine by Samuel Schoenberger from the Noun Project" src="./MinelogoSolo.png"/>
+            <div className={txtClass}>* Mine icon by Samuel Schoenberger from the Noun Project</div>
+            <button className={btnClass} onClick={props.onClick}>START</button>
+        </div>
+    );
 }
 
-function OpenSquares (index, values, cssClass, mines, size, bombSymbol) {
+function OpenAllSquares (squaresValues, squaresCSS, minesPositions, bombSymbol, rows, columns, win=false) {
+    for (let index = 0; index < squaresValues.length; index++) {
+        if (minesPositions.includes(index)) {
+            squaresValues[index] = squaresCSS[index] === 'saved' || win ? '\u2713' :
+                bombSymbol;
+            squaresCSS[index] = squaresCSS[index] === 'saved' || win ? 'saved-true' :
+                'clicked exploded';
+        }
+        if (squaresCSS[index] === 'saved') {
+            squaresValues[index] = '\u2717';
+            squaresCSS[index] = 'exploded';
+        }
+        if (!squaresCSS[index]) {
+            [squaresValues[index], squaresCSS[index]] = CountBombs(index, minesPositions,
+                rows, columns);
+            if (squaresValues[index] === 0) squaresValues[index] = '';
+        }
+    }
+    return;
+}
+
+function OpenSquares (index, squaresValues, squaresCSS, minesPositions, rows, columns) {
+    let allPositions = [index];
+    let positions = [];
+    let i = 0;
+
+    while (true) {
+        // if square was not clicked:
+        if (!squaresCSS[allPositions[i]]) {
+            // Count bombs around the square, update value with the number of bombs
+            // and squaresCSS with 'clicked ' + the number of bombs as text
+            // positions keep the indexes of the squares around
+            [squaresValues[allPositions[i]], squaresCSS[allPositions[i]], positions] =
+                CountBombs(allPositions[i], minesPositions, rows, columns);
+            if (squaresValues[allPositions[i]] === 0) {
+                squaresValues[allPositions[i]] = '';
+                for (const pos of positions) 
+                    if (!allPositions.includes(pos))
+                        allPositions.push(pos);
+            }
+        }
+        if (i < allPositions.length - 1) i++;
+        else return;
+    }
+}
+
+function CountBombs (index, minesPositions, rowsNumber, columnsNumber) {
+    const cssClasses = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'];
+    // index = row * columnsNumber + column
+    // index/columnsNumber = row (quotient) + column/columnsNumber (remainder)
+    const rowInit = Math.floor(index / columnsNumber);
+    const columnInit = index % columnsNumber;
     let positions = [];
 
-    // if square was already clicked, then return.
-    if (cssClass[index]) return [values, cssClass];
-
-    // Count bombs around the square, update value with the number of bombs
-    // and cssClass with 'clicked ' + the number of bombs as text
-    // positions keep the indexes of the squares around
-    [values[index], cssClass[index], positions] = CountBombs(size, mines, index);
-    if (values[index] === 0) values[index] = '';
-
-    // if square has no bomb around, open all the squares around
-    if (!values[index]) for (const i of positions)
-        [values, cssClass] = OpenSquares(i, values, cssClass, mines, size, bombSymbol);
-
-    // return the updated values and cssClasses -> return them to clickHandle to update state
-    return [values, cssClass];
-}
-
-function CountBombs (size, mines, index) {
-    const cssClasses = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'];
-    let positions = [index - size - 1, index - size, index - size + 1, index - 1, index + 1, index + size -1, index + size, index + size + 1];
-    const borderA = Array(size);
-    const borderB = Array(size);
-    let border = [];
-
-    // Which indexes are at the borders
-    for (let i=0; i < size; i++) {
-        borderA[i] = i * size;
-        borderB[i] = (i + 1) * size - 1;
+    for (let row = rowInit - 1; row < rowInit + 2; row++) {
+        if (row < 0 || row > rowsNumber - 1) continue;
+        for (let column = columnInit -1; column < columnInit + 2; column++) {
+            if (row === rowInit && column === columnInit) continue;
+            if (column < 0 || column > columnsNumber - 1) continue;
+            positions.push(row * columnsNumber + column);
+        }
     }
-    
-    // If the index is in one of the borders, we don't want to count
-    // bombs that are in the other border
-    if (borderA.includes(index)) border = borderB;
-    if (borderB.includes(index)) border = borderA;
-
-    // Find itens that are above or below the board
-    // and itens that are in the other border and remove them
-    for (let i=0; i < 8; i++) {
-        if (positions[i] < 0 || border.includes(positions[i]) || positions[i] > size ** 2 - 1)
-            positions.splice(i, 1, '');
-    }
-    positions = positions.filter(x => x !== '');
 
     // Count bombs in adjacent squares
     let bombs = 0;
-    for (const i of positions) if (mines.includes(i)) bombs++;
+    for (const position of positions) if (minesPositions.includes(position)) bombs++;
 
     // return the number of bombs, the updated cssClass and the valid positions around index
-    return([bombs, 'clicked ' + cssClasses[bombs], positions])
+    return([bombs, 'clicked ' + cssClasses[bombs], positions]);
 }
 
 function Zerofill (number,width) {
@@ -379,6 +447,6 @@ function Zerofill (number,width) {
 }
 
 ReactDOM.render(
-    <Game size={9} minesNumber={10} time={120}/>,
+    <Game rows={9} columns={9} minesNumber={10} time={120}/>,
     document.getElementById('root')
 );
