@@ -16,12 +16,7 @@
     :root { --scale: 1; }
 }
 
-@font-face {
-    font-family: "Digit";
-    src: local("Digit"), url(./fonts/DS-Digital_Bold.ttf) format("truetype"),
-         url(./fonts/DS-Digital_Bold.woff2) format("woff2"),
-         url(./fonts/DS-Digital_Bold.woff2) format("woff");
-}
+@import url('https://fonts.googleapis.com/css2?family=Wallpoet&display=swap');
 
 body {
     font: calc(20px * var(--scale)) "Century Gothic", "Futura", sans-serif;
@@ -210,7 +205,7 @@ body {
     box-shadow: inset 0 0 6px 6px rgba(32, 33, 36, .28);
 }
 
-.bombs-time p { font: calc(40px * var(--scale)) "Digit"; }
+.bombs-time p { font: calc(25px * var(--scale)) "Wallpoet", cursive; }
 
 .game-over {
     width: 50%;
