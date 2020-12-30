@@ -1,14 +1,18 @@
-:root { --scale: 0.25; }
-@media (min-width: 250px) {
+:root {
+    --scale: 0.25;
+    --width: 360px;
+    --height: 360px;
+}
+@media (min-width: 270px) {
     :root { --scale: calc(1/3); }
 }
-@media (min-width: 350px) {
+@media (min-width: 400px) {
     :root { --scale: 0.5; }
 }
-@media (min-width: 450px) { 
+@media (min-width: 530px) { 
     :root { --scale: calc(2/3); }
 }
-@media (min-width: 650px) { 
+@media (min-width: 790px) { 
     :root { --scale: 1; }
 }
 
@@ -22,16 +26,31 @@ body {
     text-align: center;
 }
 
- .initial {
+/*************** OverSceen styles ***************/
+ .basic {
+    overflow: hidden;
     width: 100%;
     height: 100%;
-    background-color: rgb(255, 255, 255);
     z-index: 1;
     position: absolute;
     top: 0;
     left: 0;
+    transition: background-color 2s;
+}
+
+.basic:focus { outline: none; }
+
+.initial {
+    background-color: rgb(255, 255, 255);
     transition: opacity 2s, width 2s, height 2s;
 }
+
+.transparent {
+    background-color: rgba(0, 0, 0, 0);
+    border: none;
+}
+
+.blood-transparent { background-color: rgba(0, 0, 0, 0.5); }
 
 .initial-img {
     position: absolute;
@@ -42,44 +61,137 @@ body {
     transition: opacity 2s, width 2s, height 2s, top 2s, left 2s;
 }
 
-@keyframes turning {
+.mine { animation: rotation 15s linear 0s infinite normal none; }
+
+@keyframes rotation {
     from {transform: rotate(0deg);}
     to {transform: rotate(360deg);}
-  }
-
-.mine { animation: turning 15s linear 0s infinite normal none; }
+}
 
 .initial-txt {
-    text-align: center;
     position: absolute;
     top: calc(50vh + 200px * var(--scale));
-    width: 100%;
+    left: calc(50vw - 300px * var(--scale));
+    width: calc(600px * var(--scale));;
     height: calc(30px * var(--scale));
     transition: opacity 2s, width 2s, height 2s, top 2s, left 2s, font-size 2s;
 }
 
-.abs-btn {
+.btn-position {
     position: absolute;
     top: calc(50vh + 235px * var(--scale));
     left: calc(50vw - 150px * var(--scale));
     transition: opacity 2s, width 2s, height 2s, top 2s, left 2s;
 }
 
+.basic-bg {
+    position: absolute;
+    left: 0;
+    top: calc(-190px * var(--scale));;
+    width: calc(100% * var(--scale));
+    height: calc(100px * var(--scale));
+    border-width: 30px;
+    border-style: solid;
+    border-left: none;
+    border-right: none;
+    padding-top: calc(30px * var(--scale));
+    font-size: calc(60px * var(--scale));
+    animation: scroollTopDown 2s linear 0s 1 normal forwards;
+}
+
+@keyframes scroollTopDown {
+    0% {top: calc(-190px * var(--scale));}
+    20% {top: calc((var(--height)/2 + 99px) * var(--scale));}
+    80% {top: calc((var(--height)/2 + 99px) * var(--scale)); opacity: 1;}
+    100% {top: calc(100vh - 190px * var(--scale)); opacity: 0;}
+}
+
+.victory {
+    background-color: rgb(63, 60, 77);
+    border-color: orange;
+    color: white;
+}
+
+.time {
+    background-color: rgb(189, 43, 43);
+    border-color: rgb(255, 230, 0);
+    color: black;
+}
+
+.explosion-position {
+    position: absolute;
+    top: calc(50vh - 206px * var(--scale));
+    left: calc(50vw - 308px * var(--scale));
+    width: calc(616px * var(--scale));
+    height: calc(431px * var(--scale));
+}
+
+.bomb {
+    animation: fade 6s linear 0s 1 normal forwards;
+}
+
+.foot {
+    animation: rotation 10s linear 0s 1 normal none;
+    transform-origin: 92% 21%;
+}
+
+.foot-movement { animation: moving 5s linear 0s 1 normal forwards; }
+
+@keyframes moving {
+    from {transform: translate(0, 0);}
+    to {transform: translate(50vw, -80vh);}
+}
+
+.no-text {
+    opacity: 0;
+    transition: opacity 2s;
+}
+
+.yes-text {
+    opacity: 1;
+    color: white;
+    font-weight: bold;
+    border: none;
+    animation: scroollDown 3s linear 0s 1 normal forwards;
+}
+
+@keyframes scroollDown {
+    0% {top: calc(-130px * var(--scale));}
+    20% {top: calc(50vh - 65px * var(--scale));}
+    80% {top: calc(50vh - 65px * var(--scale)); opacity: 1;}
+    100% {top: calc(100vh - 130px * var(--scale)); opacity: 0;}
+}
+
+.blood {
+    background-color: rgb(141, 29, 29);
+    animation: fade 3s linear 0s 1 normal forwards;
+}
+
+@keyframes fade {
+    0% {opacity: 1;}
+    80% {opacity: 1;}
+    100% {opacity: 0;}
+}
+
+
+
+
+/*************** Main Game styles ***************/
 .title {
     font-size: calc(60px * var(--scale));
     font-weight: bold;
     margin: calc(20px * var(--scale));
-    min-width: calc(600px * var(--scale));
+    min-width: calc((40px + var(--width)) * var(--scale));
 }
 
-.container { min-width: calc(600px * var(--scale)); }
+.container { display: inline-block; }
 
 .game-area {
     background-color: rgb(231, 231, 231);
-    display: inline-block;
     border-radius: calc(15px * var(--scale));
     box-shadow: 0 1px 6px rgba(32, 33, 36, .28);
     padding: calc(20px * var(--scale));
+    width: calc(var(--width) * var(--scale));
 }
 
 .game-info {
@@ -116,8 +228,6 @@ p {
     flex-direction: row;
 }
 
-.game-board { margin: auto; }
-
 .square {
     background: #979797;
     border: 1px solid #999999;
@@ -133,6 +243,7 @@ p {
     padding-right: calc(5px * var(--scale));
     width: calc(40px * var(--scale));
     box-shadow: inset -6px -6px 6px rgba(32, 33, 36, .28);
+    transition: box-shadow 0.05s ;
 }
 
 .square:focus { outline: none; }
@@ -173,10 +284,7 @@ p {
     min-width: 100%;
 }
 
-.input{
-    display: table-cell;
-    text-align: center;
-}
+.input{ display: table-cell; }
 
 .input:first-child  { text-align: left; }
 
@@ -204,7 +312,8 @@ p {
 
 .restart-button:active { background-color: red; }
 
-.trigger {
+/* Trasition of Initial Screen */
+.vanish {
     opacity: 0;
     height: 0;
     width: 0;
