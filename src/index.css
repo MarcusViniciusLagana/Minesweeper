@@ -18,7 +18,9 @@
 
 @font-face {
     font-family: "Digit";
-    src: url(./DS-Digital_Bold.ttf) format("truetype");
+    src: url(./DS-Digital_Bold.ttf) format("truetype"),
+         url(./DS-Digital_Bold.woff2) format("woff2"),
+         url(./DS-Digital_Bold.woff) format("woff");
 }
 
 body {
