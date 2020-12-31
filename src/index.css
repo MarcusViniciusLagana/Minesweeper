@@ -234,6 +234,11 @@ p {
     flex-direction: row;
 }
 
+.board-row {
+    display: flex;
+    flex-direction: row;
+}
+
 .square {
     background: #979797;
     border: 1px solid #999999;

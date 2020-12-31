@@ -1,13 +1,22 @@
+import ClickNHold from 'react-click-n-hold';
+
 function Square (props) {
     const cssClass = props.squareCSS + ' square';
     let value = props.squareValue;
-    const clickHandle = (mouse) => props.clickHandle(mouse);
-    const contextHandle = (mouse) => {mouse.preventDefault(); props.clickHandle(mouse);}
+    const clickHandle = (e, enought) => {
+        if (!enought) {
+            if (e.button === 0) props.clickHandle('left');
+            else if (e.button === 2) props.clickHandle('right');
+        }
+    }
+    const rightClick = () => props.clickHandle('right');
 
     return (
-        <button className={cssClass} onClick={clickHandle} onContextMenu={contextHandle}>
-            {value}
-        </button>
+        <ClickNHold time={props.holdTime} onClickNHold={rightClick} onEnd={clickHandle}>
+            <button className={cssClass} onContextMenu={(e) => e.preventDefault()}>
+                {value}
+            </button>
+        </ClickNHold>
     );
 }
 
@@ -15,9 +24,10 @@ function BoardRow (props) {
 
     const columns = props.squaresValues.map((squareValue, column) =>
         <Square key={'square-' + props.row.toString() + '-' + column.toString()}
+            holdTime={props.holdTime}
             squareValue={squareValue}
             squareCSS={props.squaresCSS[column]}
-            clickHandle={(mouse) => props.clickHandle(mouse, column)}/>
+            clickHandle={(button) => props.clickHandle(button, column)}/>
     );
 
     return(
@@ -40,9 +50,10 @@ export default function Board (props) {
         const squaresCSS = props.squaresCSS.slice(initIndex, endIndex);
         rows[row] = <BoardRow key={'row-' + row.toString()}
             row={row}
+            holdTime={props.holdTime}
             squaresValues={squaresValues}
             squaresCSS={squaresCSS}
-            clickHandle={(mouse, column) => props.clickHandle(mouse, initIndex + column)}/>
+            clickHandle={(button, column) => props.clickHandle(button, initIndex + column)}/>
     }
 
     return (
