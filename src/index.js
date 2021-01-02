@@ -4,7 +4,7 @@ import Board from './board';
 import GameInfo from './gameinfo';
 import Menu from './menu';
 import OverScreen from './overscreen';
-import * as screens from './screens';
+import * as screens from './screens.json';
 import * as sqr from './squaresf';
 import './index.css';
 
@@ -36,6 +36,7 @@ class Game extends React.Component {
             minesPositions,
             initialTime: props.time,
             time: props.time,
+            holdTime: props.holdTime,
             rowsNumber,
             columnsNumber,
             bombSymbol: bombs[index],
@@ -88,14 +89,14 @@ class Game extends React.Component {
         });
     }
 
-    clickHandle (mouse, index) {
+    clickHandle (button, index) {
         let squaresValues = this.state.squaresValues.slice();
         let squaresCSS = this.state.squaresCSS.slice();
         let phase = this.state.phase;
         let msg = '';
         let positions = [];
 
-        if (phase === 'game-over' || !this.state.time) return;
+        if (phase === 'game-over' || !this.state.time || !button) return;
 
         // If it is the first click, initializes clock
         if (phase === 'paused') {
@@ -113,7 +114,7 @@ class Game extends React.Component {
         }
 
         // if clicked with left button
-        if (mouse.button === 0) {
+        if (button === 'left') {
             // if square was already clicked, then return.
             if (squaresCSS[index]) return;
 
@@ -146,7 +147,7 @@ class Game extends React.Component {
                 }
             }
         // if clicked with right button
-        } else if (mouse.button === 2) {
+        } else if (button === 'right') {
             // if the button is clicked, return
             if (squaresCSS[index] && squaresCSS[index] !== 'saved') return;
 
@@ -224,7 +225,8 @@ class Game extends React.Component {
                             squaresCSS={this.state.squaresCSS}
                             rowsNumber={this.state.rowsNumber}
                             columnsNumber={this.state.columnsNumber}
-                            clickHandle={(mouse, i) => this.clickHandle(mouse, i)}/>
+                            holdTime={this.state.holdTime}
+                            clickHandle={(button, i) => this.clickHandle(button, i)}/>
                     </div>
                     <Menu level={this.state.level}
                         levelControl={(element) => this.levelControl(element)}/>
@@ -241,6 +243,6 @@ class Game extends React.Component {
 }
 
 ReactDOM.render(
-    <Game rows={9} columns={9} minesNumber={10} time={120}/>,
+    <Game rows={9} columns={9} minesNumber={10} time={120} holdTime={0.3}/>,
     document.getElementById('root')
 );
