@@ -16,18 +16,30 @@ function Button (props) {
     );
 }
 
+function FirstLine (props) { return (<>{props.txt}</>); }
+
+function Line (props) { return (<><br/><br/>{props.txt}</>); }
+
+function Text (props) {
+    const text = props.txt;
+    const content = [];
+
+    content.push(<FirstLine key={props.index + '-Line-0'}
+        txt={text.content[0]}/>);
+
+    for (let idx = 1; idx < text.content.length; idx++) {
+        const line = text.content[idx];
+        const key = props.index + '-Line-' + idx.toString();
+        content.push(<Line key={key} txt={line}/>);
+    }
+
+    return (<>{content}</>);
+}
+
 function Division (props) {
     const div = props.div;
-    let content = [];
-
-    for (let idx = 0; idx < div.content.length; idx++) {
-        const item = div.content[idx];
-        const key = props.index + '-' + item.type + '-' + idx.toString();
-        if (item.type === 'text') content.push(item.text);
-        if (item.type === 'img') content.push(<Image key={key} initialState={props.initialState} img={item}/>);
-        if (item.type === 'btn') content.push(<Button key={key} initialState={props.initialState} btn={item} clickHandle={props.clickHandle}/>);
-        if (item.type === 'div') content.push(<Division key={key} index={key} initialState={props.initialState} div={item} clickHandle={props.clickHandle}/>);
-    }
+ 
+    const content = renderDIV(div.content, props.initialState, props.clickHandle, props.index);
 
     return (
         <div className={props.initialState ? div.activeCSS : div.deactiveCSS}>
@@ -81,20 +93,28 @@ export default class OverScreen extends React.Component {
 
         const div = this.state.content.slice();
         const clickHandle = () => this.fadeOut();
-        let content = [];
+        const initialState = this.state.initialState;
 
-        for (let idx = 0; idx < div.length; idx++) {
-            const item = div[idx];
-            const key = item.type + '-' + idx.toString();
-            if (item.type === 'text') content.push(item.text);
-            if (item.type === 'img') content.push(<Image key={key} initialState={this.state.initialState} img={item}/>);
-            if (item.type === 'btn') content.push(<Button key={key} initialState={this.state.initialState} btn={item} clickHandle={clickHandle}/>);
-            if (item.type === 'div') content.push(<Division key={key} index={key} initialState={this.state.initialState} div={item} clickHandle={clickHandle}/>);
-        }
+        const content = renderDIV(div, initialState, clickHandle);
 
         if (this.state.autoFadeOut && !OverScreen.fadeOutTimer)
             OverScreen.fadeOutTimer = setTimeout(() => this.fadeOut(), this.state.time);
 
         return (<> {content} </>);
     }
+}
+
+function renderDIV (div, initialState, clickHandle, parentKey='init') {
+    let content = [];
+
+    for (let idx = 0; idx < div.length; idx++) {
+        const item = div[idx];
+        const key = parentKey + '-' + item.type + '-' + idx.toString();
+        if (item.type === 'text') content.push(<Text key={key} index={key} txt={item}/>);
+        if (item.type === 'img') content.push(<Image key={key} initialState={initialState} img={item}/>);
+        if (item.type === 'btn') content.push(<Button key={key} initialState={initialState} btn={item} clickHandle={clickHandle}/>);
+        if (item.type === 'div') content.push(<Division key={key} index={key} initialState={initialState} div={item} clickHandle={clickHandle}/>);
+    }
+
+    return content;
 }

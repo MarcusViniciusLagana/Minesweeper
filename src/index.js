@@ -4,7 +4,7 @@ import Board from './board';
 import GameInfo from './gameinfo';
 import Menu from './menu';
 import OverScreen from './overscreen';
-import * as screens from './screens';
+import * as screens from './screens.json';
 import * as sqr from './squaresf';
 import './index.css';
 

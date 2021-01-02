@@ -32,8 +32,8 @@ body {
 /*************** OverSceen styles ***************/
  .basic {
     overflow: hidden;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     z-index: 1;
     position: absolute;
     top: 0;
@@ -75,7 +75,7 @@ body {
     position: absolute;
     top: calc(50vh + 200px * var(--scale));
     left: calc(50vw - 300px * var(--scale));
-    width: calc(600px * var(--scale));;
+    width: calc(600px * var(--scale));
     height: calc(30px * var(--scale));
     transition: opacity 2s, width 2s, height 2s, top 2s, left 2s, font-size 2s;
 }
@@ -90,8 +90,8 @@ body {
 .basic-bg {
     position: absolute;
     left: 0;
-    top: calc(-190px * var(--scale));;
-    width: calc(100% * var(--scale));
+    top: calc(-190px * var(--scale));
+    width: calc(100vw * var(--scale));
     height: calc(100px * var(--scale));
     border-width: 30px;
     border-style: solid;
@@ -292,7 +292,7 @@ p {
 .level {
     margin-top: calc(20px * var(--scale));
     display: table;
-    min-width: 100%;
+    width: 100%;
 }
 
 .input{ display: table-cell; }
