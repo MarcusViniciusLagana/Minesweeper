@@ -1,5 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { instanceOf } from 'prop-types';
+import { CookiesProvider, withCookies, Cookies } from 'react-cookies';
 import Board from './board';
 import GameInfo from './gameinfo';
 import Menu from './menu';
@@ -12,13 +14,16 @@ class Game extends React.Component {
 
     static timerID = null;
 
+    static propTypes = { cookies: instanceOf(Cookies).isRequired };
+
     constructor (props) {
         super (props);
         const {rowsNumber, columnsNumber, minesNumber, time, holdTime} = props;
+        const { cookies } = this.props;
 
         // setting initial state
         this.state = {
-            gameID: null,
+            gameID: cookies.get('gameID') || null,
             rowsNumber,
             columnsNumber,
             minesNumber,
@@ -36,9 +41,13 @@ class Game extends React.Component {
     // when mounting, set timer to null
     async componentDidMount () {
         Game.timerID = null;
-        const {rowsNumber, columnsNumber, minesNumber} = this.state;
-        const gameID = await sqr.startNewGame({minesNumber, rowsNumber, columnsNumber});
-        this.setState({ gameID });
+        const { cookies } = this.props;
+        if (this.state.gameID) await sqr.restartGame(this.state);
+        else {
+            const { gameID } = await sqr.startNewGame(this.state);
+            cookies.set('gameID', gameID);
+            this.setState({ gameID });
+        }
     }
 
     // when unmouting, reset timer
@@ -49,7 +58,7 @@ class Game extends React.Component {
         if (!rowsNumber) rowsNumber = this.state.rowsNumber;
         if (!columnsNumber) columnsNumber = this.state.columnsNumber;
         
-        await sqr.restartGame({id: this.state.gameID, rowsNumber, columnsNumber, minesNumber});
+        await sqr.restartGame({gameID: this.state.gameID, rowsNumber, columnsNumber, minesNumber});
         
         // resseting timer
         const time = this.state.initialTime;
@@ -98,7 +107,7 @@ class Game extends React.Component {
             // if square was already clicked, then return.
             if (squaresCSS[index]) return;
 
-            const data = await sqr.OpenSquare({id: this.state.gameID, index, squaresValues, squaresCSS});
+            const data = await sqr.OpenSquare({gameID: this.state.gameID, index, squaresValues, squaresCSS});
             squaresValues = data.squaresValues.slice();
             squaresCSS = data.squaresCSS.slice();
 
@@ -132,7 +141,7 @@ class Game extends React.Component {
             phase = 'game-over';
             msg = 'Victory!';
             clearInterval(Game.timerID);
-            const data = await sqr.OpenSquare({id: this.state.gameID, index, squaresValues, squaresCSS, win: true});
+            const data = await sqr.OpenSquare({gameID: this.state.gameID, index, squaresValues, squaresCSS, win: true});
             squaresValues = data.squaresValues.slice();
             squaresCSS = data.squaresCSS.slice();
         }
@@ -209,7 +218,11 @@ class Game extends React.Component {
     }
 }
 
+const GameApp = withCookies(Game)
+
 ReactDOM.render(
-    <Game rowsNumber={9} columnsNumber={9} minesNumber={10} time={120} holdTime={0.3}/>,
+    <CookiesProvider>
+        <GameApp rowsNumber={9} columnsNumber={9} minesNumber={10} time={120} holdTime={0.3}/>
+    </CookiesProvider>,
     document.getElementById('root')
 );

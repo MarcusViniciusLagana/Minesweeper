@@ -1,15 +1,17 @@
 import { stringifyUrl } from 'query-string';
 
+const connectionURL = 'https://minesweeper-bke.herokuapp.com'
+
 export async function startNewGame (body) {
     const requestOptions = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
     };
-    const response = await fetch(`http://localhost:3005/Init`, requestOptions);
+    const response = await fetch(`${connectionURL}/Init`, requestOptions);
     const data = await response.json();
     console.log(data.msg);
-    return data.id;
+    return data;
 }
 
 export async function OpenSquare (body) {
@@ -19,15 +21,14 @@ export async function OpenSquare (body) {
     };
 
     const url = stringifyUrl({
-        url: 'http://localhost:3005/OpenSquare/',
+        url: `${connectionURL}/OpenSquare/`,
         query: body
     });
 
     const response = await fetch(url, requestOptions);
     const data = await response.json();
     console.log(data.msg);
-    const { exploded, squaresValues, squaresCSS } = data;
-    return { exploded, squaresValues, squaresCSS };
+    return data;
 }
 
 export async function restartGame (body) {
@@ -36,7 +37,7 @@ export async function restartGame (body) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
     };
-    const response = await fetch(`http://localhost:3005/Restart`, requestOptions);
+    const response = await fetch(`${connectionURL}/Restart`, requestOptions);
     const data = await response.json();
     console.log(data.msg);
     return;
