@@ -1,5 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { instanceOf } from 'prop-types';
+import { CookiesProvider, withCookies, Cookies } from 'react-cookies';
 import Board from './board';
 import GameInfo from './gameinfo';
 import Menu from './menu';
@@ -12,34 +14,24 @@ class Game extends React.Component {
 
     static timerID = null;
 
+    static propTypes = { cookies: instanceOf(Cookies).isRequired };
+
     constructor (props) {
         super (props);
-        const rowsNumber = props.rows;
-        const columnsNumber = props.columns;
-
-        // sorting mines positions
-        const minesPositions = Array(props.minesNumber);
-        for (let i = 0; i < props.minesNumber; i++) {
-            const index = Math.floor(Math.random() * rowsNumber * columnsNumber);
-            if (!minesPositions.includes(index)) minesPositions[i] = index;
-            else i--;
-        }
-
-        // sorting bomb symbol
-        const bombs = ['\u2620','\u2622','\u2623'];
-        const index = Math.floor(Math.random() * bombs.length);
+        const {rowsNumber, columnsNumber, minesNumber, time, holdTime} = props;
+        const { cookies } = this.props;
 
         // setting initial state
         this.state = {
-            squaresValues: Array(rowsNumber * columnsNumber).fill(''),
-            squaresCSS: Array(rowsNumber * columnsNumber).fill(''),
-            minesPositions,
-            initialTime: props.time,
-            time: props.time,
-            holdTime: props.holdTime,
+            gameID: cookies.get('gameID') || null,
             rowsNumber,
             columnsNumber,
-            bombSymbol: bombs[index],
+            minesNumber,
+            squaresValues: Array(rowsNumber * columnsNumber).fill(''),
+            squaresCSS: Array(rowsNumber * columnsNumber).fill(''),
+            initialTime: time,
+            time,
+            holdTime,
             phase: 'paused',
             level: 'easy',
             msg: '',
@@ -47,54 +39,51 @@ class Game extends React.Component {
     }
 
     // when mounting, set timer to null
-    componentDidMount () { Game.timerID = null; }
+    async componentDidMount () {
+        Game.timerID = null;
+        const { cookies } = this.props;
+        if (this.state.gameID) await sqr.restartGame(this.state);
+        else {
+            const { gameID } = await sqr.startNewGame(this.state);
+            cookies.set('gameID', gameID);
+            this.setState({ gameID });
+        }
+    }
 
     // when unmouting, reset timer
     componentWillUnmount () { if (Game.timerID) clearInterval(Game.timerID); }
 
-    restartGame (rowsNumber = null, columnsNumber = null, minesNumber = null) {
-        // reseting size
+    async restartGame (rowsNumber = null, columnsNumber = null, minesNumber = null) {
+        if (!minesNumber) minesNumber = this.state.minesNumber;
         if (!rowsNumber) rowsNumber = this.state.rowsNumber;
         if (!columnsNumber) columnsNumber = this.state.columnsNumber;
-        if (!minesNumber) minesNumber = this.state.minesPositions.length;
-
-        // sorting mines positions
-        const minesPositions = Array(minesNumber);
-        for (let i = 0; i < minesNumber; i++) {
-            const index = Math.floor(Math.random() * rowsNumber * columnsNumber);
-            if (!minesPositions.includes(index)) minesPositions[i] = index;
-            else i--;
-        }
-
+        
+        await sqr.restartGame({gameID: this.state.gameID, rowsNumber, columnsNumber, minesNumber});
+        
         // resseting timer
         const time = this.state.initialTime;
         if (Game.timerID) clearInterval(Game.timerID);
         Game.timerID = null;
 
-        // sorting new bomb symbol
-        const bombs = ['\u2620','\u2622','\u2623'];
-        const index = Math.floor(Math.random() * bombs.length);
-
         // reseting state
         this.setState({
-            squaresValues: Array(rowsNumber * columnsNumber).fill(''),
-            squaresCSS: Array(rowsNumber * columnsNumber).fill(''),
-            minesPositions,
-            time,
             rowsNumber,
             columnsNumber,
-            bombSymbol: bombs[index],
+            minesNumber,
+            squaresValues: Array(rowsNumber * columnsNumber).fill(''),
+            squaresCSS: Array(rowsNumber * columnsNumber).fill(''),
+            time,
             phase: 'paused',
             msg: ''
         });
     }
 
-    clickHandle (button, index) {
+    async clickHandle (button, index) {
         let squaresValues = this.state.squaresValues.slice();
         let squaresCSS = this.state.squaresCSS.slice();
+        const minesNumber = this.state.minesNumber;
         let phase = this.state.phase;
         let msg = '';
-        let positions = [];
 
         if (phase === 'game-over' || !this.state.time || !button) return;
 
@@ -118,10 +107,12 @@ class Game extends React.Component {
             // if square was already clicked, then return.
             if (squaresCSS[index]) return;
 
+            const data = await sqr.OpenSquare({gameID: this.state.gameID, index, squaresValues, squaresCSS});
+            squaresValues = data.squaresValues.slice();
+            squaresCSS = data.squaresCSS.slice();
+
             // if square is a bomb, game-over
-            if (this.state.minesPositions.includes(index)) {
-                sqr.OpenAllSquares(squaresValues, squaresCSS, this.state.minesPositions,
-                    this.state.bombSymbol, this.state.rowsNumber, this.state.columnsNumber);
+            if (data.exploded) {
                 squaresCSS[index] = 'clicked'
                 phase = 'game-over';
                 msg = 'Exploded!!!';
@@ -130,21 +121,6 @@ class Game extends React.Component {
             // Update value with the number of bombs and squaresCSS with
             // 'clicked ' + the number of bombs as text
             // positions keep the indexes of the squares around
-            } else {
-                [squaresValues[index], squaresCSS[index], positions] =
-                    sqr.CountBombs(index,
-                        this.state.minesPositions,
-                        this.state.rowsNumber,
-                        this.state.columnsNumber);
-                if (squaresValues[index] === 0) {
-                    squaresValues[index] = '';
-                // if square has no bombSymbol around, open all the squares around
-                    for (const position of positions)
-                        sqr.OpenSquares(position, squaresValues, squaresCSS,
-                        this.state.minesPositions,
-                        this.state.rowsNumber,
-                        this.state.columnsNumber);
-                }
             }
         // if clicked with right button
         } else if (button === 'right') {
@@ -161,13 +137,13 @@ class Game extends React.Component {
         }
 
         // Check if only the bombSymbol squares are not clicked, if yes -> Victory!
-        if (phase !=='game-over' && this.state.minesPositions.length ===
-            squaresCSS.filter(x => x.indexOf('clicked') === -1).length) {
+        if (phase !=='game-over' && minesNumber === squaresCSS.filter(x => x.indexOf('clicked') === -1).length) {
             phase = 'game-over';
             msg = 'Victory!';
             clearInterval(Game.timerID);
-            sqr.OpenAllSquares(squaresValues, squaresCSS, this.state.minesPositions,
-                this.state.bombSymbol, this.state.rowsNumber, this.state.columnsNumber, true);
+            const data = await sqr.OpenSquare({gameID: this.state.gameID, index, squaresValues, squaresCSS, win: true});
+            squaresValues = data.squaresValues.slice();
+            squaresCSS = data.squaresCSS.slice();
         }
 
         // save the current state
@@ -198,7 +174,7 @@ class Game extends React.Component {
     }
 
     render () {
-        const minesNumber = this.state.minesPositions.length;
+        const minesNumber = this.state.minesNumber;
         const squaresCSS = this.state.squaresCSS;
         // Count the number of mines already discovered (saved)
         const bombsNumber = minesNumber - squaresCSS.filter(x => x === 'saved').length
@@ -242,7 +218,11 @@ class Game extends React.Component {
     }
 }
 
+const GameApp = withCookies(Game)
+
 ReactDOM.render(
-    <Game rows={9} columns={9} minesNumber={10} time={120} holdTime={0.3}/>,
+    <CookiesProvider>
+        <GameApp rowsNumber={9} columnsNumber={9} minesNumber={10} time={120} holdTime={0.3}/>
+    </CookiesProvider>,
     document.getElementById('root')
 );
