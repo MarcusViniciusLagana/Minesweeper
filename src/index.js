@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { instanceOf } from 'prop-types';
-import { CookiesProvider, withCookies, Cookies } from 'react-cookies';
+import { CookiesProvider, withCookies, Cookies } from 'react-cookie';
 import Board from './board';
 import GameInfo from './gameinfo';
 import Menu from './menu';
