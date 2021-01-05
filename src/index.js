@@ -13,6 +13,7 @@ import './index.css';
 class Game extends React.Component {
 
     static timerID = null;
+    static updates = [];
 
     static propTypes = { cookies: instanceOf(Cookies).isRequired };
 
@@ -41,10 +42,15 @@ class Game extends React.Component {
     // when mounting, set timer to null
     async componentDidMount () {
         Game.timerID = null;
-        const { cookies } = this.props;
-        if (this.state.gameID) await sqr.restartGame(this.state);
-        else {
-            const { gameID } = await sqr.startNewGame(this.state);
+
+        const {gameID, rowsNumber, columnsNumber, minesNumber} = this.state;
+        let response = {status: null};
+
+        if (gameID)  response = await sqr.restartGame({gameID, rowsNumber, columnsNumber, minesNumber});
+        if (!gameID || response.status === 'failed') {
+            const { cookies } = this.props;
+            cookies.remove();
+            const { gameID } = await sqr.startNewGame({rowsNumber, columnsNumber, minesNumber});
             cookies.set('gameID', gameID);
             this.setState({ gameID });
         }
@@ -81,6 +87,7 @@ class Game extends React.Component {
     async clickHandle (button, index) {
         let squaresValues = this.state.squaresValues.slice();
         let squaresCSS = this.state.squaresCSS.slice();
+        const gameID = this.state.gameID;
         const minesNumber = this.state.minesNumber;
         let phase = this.state.phase;
         let msg = '';
@@ -107,9 +114,10 @@ class Game extends React.Component {
             // if square was already clicked, then return.
             if (squaresCSS[index]) return;
 
-            const data = await sqr.OpenSquare({gameID: this.state.gameID, index, squaresValues, squaresCSS});
-            squaresValues = data.squaresValues.slice();
-            squaresCSS = data.squaresCSS.slice();
+            const data = await sqr.OpenSquare({gameID, index, updates: Game.updates});
+            Game.updates = [];
+            squaresValues = data.squaresValues;
+            squaresCSS = data.squaresCSS;
 
             // if square is a bomb, game-over
             if (data.exploded) {
@@ -134,6 +142,8 @@ class Game extends React.Component {
             // set the corresponding squaresCSS if the 'saved' symbol is used
             if (squaresValues[index] === '\u2691') squaresCSS[index] = 'saved';
             else squaresCSS[index] = '';
+            if (Game.updates.length > 0 && Game.updates[Game.updates.length - 1].index === index) Game.updates.pop();
+            Game.updates.push({index, squareValue: squaresValues[index], squareCSS: squaresCSS[index] });
         }
 
         // Check if only the bombSymbol squares are not clicked, if yes -> Victory!
@@ -141,9 +151,10 @@ class Game extends React.Component {
             phase = 'game-over';
             msg = 'Victory!';
             clearInterval(Game.timerID);
-            const data = await sqr.OpenSquare({gameID: this.state.gameID, index, squaresValues, squaresCSS, win: true});
-            squaresValues = data.squaresValues.slice();
-            squaresCSS = data.squaresCSS.slice();
+            const data = await sqr.OpenSquare({gameID, index, updates: Game.updates, win: true});
+            Game.updates = [];
+            squaresValues = data.squaresValues;
+            squaresCSS = data.squaresCSS;
         }
 
         // save the current state

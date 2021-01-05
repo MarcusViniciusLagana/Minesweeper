@@ -1,6 +1,6 @@
-import { stringifyUrl } from 'query-string';
+//import { stringifyUrl } from 'query-string';
 
-const connectionURL = 'https://minesweeper-bke.herokuapp.com'
+const connectionURL = 'http://localhost:3005'
 
 export async function startNewGame (body) {
     const requestOptions = {
@@ -16,16 +16,12 @@ export async function startNewGame (body) {
 
 export async function OpenSquare (body) {
     const requestOptions = {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
     };
 
-    const url = stringifyUrl({
-        url: `${connectionURL}/OpenSquare/`,
-        query: body
-    });
-
-    const response = await fetch(url, requestOptions);
+    const response = await fetch(`${connectionURL}/OpenSquare`, requestOptions);
     const data = await response.json();
     console.log(data.msg);
     return data;
@@ -40,5 +36,5 @@ export async function restartGame (body) {
     const response = await fetch(`${connectionURL}/Restart`, requestOptions);
     const data = await response.json();
     console.log(data.msg);
-    return;
+    return data;
 }
