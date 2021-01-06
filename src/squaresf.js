@@ -1,6 +1,6 @@
 //import { stringifyUrl } from 'query-string';
 
-const connectionURL = 'http://localhost:3005'
+const connectionURL = 'https://minesweeper-bke.herokuapp.com'
 
 export async function startNewGame (body) {
     const requestOptions = {
